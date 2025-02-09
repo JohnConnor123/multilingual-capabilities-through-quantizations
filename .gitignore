@@ -1,5 +1,6 @@
 __pycache__
 venv
+llama.cpp
 MERA
 AutoGPTQ
 models

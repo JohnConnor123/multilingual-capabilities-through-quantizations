@@ -1,5 +1,5 @@
 ## Quickstart
-P.s. This code works only on Linux and tested only with python3.12 and cuda12.1/cuda12.4
+P.s. This code works only on Linux and tested only with python3.12 and cuda12.1
 1. Create enviroment:
 ```
 python -m venv venv
@@ -15,6 +15,7 @@ P.s. If you get the error:
 libcusparse.so.12: undefined symbol: __nvJitLinkAddData_12_1, version libnvJitLink.so.12
 ```
 when running the AutoGPTQ installation command, then just run the command `unset LD_LIBRARY_PATH` (more details: https://github.com/pytorch/pytorch/issues/111469#issue-1949414420)
+
 P.s. If you get the error:
 ```
 In file included from /usr/local/cuda-12.1/include/cuda_runtime.h:83,
@@ -45,6 +46,13 @@ git pull --all --rebase --recurse-submodules
 ```
 3. Download llama.cpp project:
 ```
-
+git clone https://github.com/ggerganov/llama.cpp
+cd llama.cpp
+cmake -B build -DGGML_CUDA=ON
+cmake --build build --config Release
+cd ..
 ```
+P.s. If you want to speed up the build process, add `-j <number of threads>`. For example, the command below will use 8 threads to build llama.cpp:
+`cmake --build build --config Release -j 8`
+
 4. 
