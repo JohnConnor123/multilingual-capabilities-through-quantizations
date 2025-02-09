@@ -43,7 +43,12 @@ and run it via `sudo bash script.sh` (more details: https://askubuntu.com/a/1510
 ```
 git clone --recurse-submodules https://github.com/MERA-Evaluation/MERA.git
 git pull --all --rebase --recurse-submodules
+cd MERA/lm-evaluation-harness
+pip install -e .[vllm]
+cd ..
 ```
+After that use mera evaluate commands in MERA directory
+
 3. Download llama.cpp project:
 ```
 git clone https://github.com/ggerganov/llama.cpp
