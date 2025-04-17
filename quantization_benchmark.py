@@ -172,22 +172,18 @@ def compare_quantizations(
 
 if __name__ == "__main__":
     model_id = "crumb/nano-mistral"
-    prefix_dir = "models"
-    path_to_llama_cpp = '/home/john/quantizations/quantize/'
+    # model_id = "RefalMachine/RuadaptQwen2.5-14B-Instruct-1M"
+    prefix_dir = f"models/{model_id.split('/')[1]}"
+    path_to_llama_cpp = '/home/calibri/experiments/quantization_benchmark'
 
     configs = {
         "gptq": [
             {"bits": 4, "q_group_size": 128},
             {"bits": 8, "q_group_size": 64}
         ],
-        "awq": {"w_bit": 4, "q_group_size": 128, "version": "GEMM"},
+        "awq": {"w_bit": 4, "q_group_size": 64, "zero_point": True, "version": "GEMM"},
         "bnb": [{"load_in_4bit": True}, {"load_in_8bit": True}]
     }
-    # configs = {
-    #     "gptq": {"bits": 4, "q_group_size": 128},
-    #     "awq": {"w_bit": 4, "q_group_size": 128, "version": "GEMM"},
-    #     "bnb": {"load_in_4bit": True}
-    # }
     
     test_input = "Это тестовый текст для оценки производительности модели."
     test_dataset = """

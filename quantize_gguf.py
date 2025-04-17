@@ -14,19 +14,20 @@ login(token=os.getenv("HF_TOKEN"))
 def download_and_prepare_model(model_id: str, path_to_llama_cpp: str, prefix_dir: str = './') -> None:
     prefix_dir += '/' if prefix_dir[-1] != '/' else ''
     model_path = prefix_dir + model_id.split("/")[1]
+    path_to_llama_cpp += '/' if path_to_llama_cpp[-1] != '/' else ''
 
     logger.info("Downloading model")
     snapshot_download(repo_id=model_id, local_dir=model_path, revision="main")
                 
     logger.info("Converting to bfloat16 before quantizations")
-    # if not os.path.exists(model_path + '-bf16'):
-    #     subprocess.run([
-    #         "python",
-    #         path_to_llama_cpp + "llama.cpp/convert_hf_to_gguf.py",
-    #         model_path,
-    #         "--outfile", model_path + '-bf16.gguf',
-    #         "--outtype", "bf16"
-    #     ], check=True)
+    if not os.path.exists(model_path + '-bf16'):
+        subprocess.run([
+            "python",
+            path_to_llama_cpp + "llama.cpp/convert_hf_to_gguf.py",
+            model_path,
+            "--outfile", model_path + '-bf16.gguf',
+            "--outtype", "bf16"
+        ], check=True)
     
 
 def quantize_gguf(model_id: str, quant_type: str, prefix_dir: str = './', path_to_llama_cpp: str = './') -> str:
@@ -36,7 +37,7 @@ def quantize_gguf(model_id: str, quant_type: str, prefix_dir: str = './', path_t
     model_path = prefix_dir + model_id.split('/')[1] if os.path.exists(prefix_dir + model_id.split('/')[1]) else model_id
     
     quant_dir = prefix_dir + model_id.split('/')[1] + '-' + quant_type
-    quant_name = f"{model_id.split("/")[1]}-{quant_type}.gguf"
+    quant_name = f"{model_id.split('/')[1]}-{quant_type}.gguf"
     quant_path = quant_dir + '/' + quant_name
 
     if os.path.exists(quant_dir):
@@ -74,7 +75,7 @@ if __name__ == "__main__":
     model_id = "Qwen/Qwen2.5-0.5B-Instruct"
     prefix_dir = f'models/{model_id.split("/")[1]}'
     gguf_types = ["Q8_0", "Q6_K", "Q5_K_M", "Q4_0"]
-    path_to_llama_cpp = '/home/john/quantizations/quantize/'
+    path_to_llama_cpp = '/home/calibri/experiments/quantization_benchmark'
 
     download_and_prepare_model(model_id, path_to_llama_cpp, prefix_dir=prefix_dir)
 

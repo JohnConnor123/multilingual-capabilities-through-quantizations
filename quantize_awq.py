@@ -44,6 +44,7 @@ if __name__ == "__main__":
 
 
     model_id = "Qwen/Qwen2.5-0.5B-Instruct"
+    # model_id = "RefalMachine/RuadaptQwen2.5-14B-Instruct-1M"
     prefix_dir = f'models/{model_id.split("/")[1]}'
     awq_config = {"zero_point": True, "q_group_size": 64, "w_bit": 4, "version": "GEMM"}
 

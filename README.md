@@ -45,7 +45,7 @@ git clone --recurse-submodules https://github.com/MERA-Evaluation/MERA.git
 git pull --all --rebase --recurse-submodules
 cd MERA/lm-evaluation-harness
 pip install -e .[vllm]
-cd ..
+cd ../..
 ```
 After that use mera evaluate commands in MERA directory
 

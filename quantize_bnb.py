@@ -41,7 +41,7 @@ def quantize_bnb(model_id: str, quant_config: dict, prefix_dir: str = './') -> s
 
         logger.info("Save Bitsandbytes quantized model")
         os.makedirs(prefix_dir + quant_path, exist_ok=True)
-        snapshot_download(f"{os.getenv("HF_USERNAME")}/{quant_path}", local_dir=prefix_dir + quant_path, revision="main")
+        snapshot_download(f"{os.getenv('HF_USERNAME')}/{quant_path}", local_dir=prefix_dir + quant_path, revision="main")
 
     return prefix_dir + quant_path
 
