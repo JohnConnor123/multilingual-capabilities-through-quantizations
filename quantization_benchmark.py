@@ -65,20 +65,62 @@ def measure_memory_usage(model) -> float:
     memory_usage = torch.cuda.max_memory_allocated() / (1024 ** 3)
     return memory_usage
 
-def calculate_perplexity(model, tokenizer, test_dataset: str) -> float:
-    """Вычисляет перплексию на тестовом наборе"""
+def calculate_perplexity(model, tokenizer, test_dataset: str, max_length: int = 1024, stride: int = 512) -> float:
+    """Вычисляет перплексию на тестовом наборе.
+
+    Для избежания переполнения памяти и получения более корректной оценки
+    рассчитываем кросс‑энтропийный лосс по всему набору данных батчами
+    фиксированной длины. Затем усредняем лосс по всем токенам и берём
+    экспоненту.
+
+    Parameters
+    ----------
+    model : PreTrainedModel
+        Модель, для которой считается перплексия.
+    tokenizer : PreTrainedTokenizer
+        Токенизатор.
+    test_dataset : str
+        Текстовая последовательность, на которой измеряется перплексия.
+    max_length : int, optional (default=1024)
+        Максимальная длина последовательности, подаваемой в модель за один
+        проход.
+    stride : int, optional (default=512)
+        Шаг скользящего окна. Для stride < max_length сохраняется пересечение
+        окон, чтобы каждое окно имело достаточно контекста.
+    """
     model.eval()
-    total_loss = 0
-    total_tokens = 0
-    
+
     print(get_prefix() + "Calculating perplexity...")
-    with torch.no_grad():
-        inputs = tokenizer(test_dataset, return_tensors="pt").to(model.device)
-        outputs = model(**inputs, labels=inputs["input_ids"])
-        total_loss += outputs.loss.item() * inputs["input_ids"].shape[1]
-        total_tokens += inputs["input_ids"].shape[1]
-    
-    return torch.exp(torch.tensor(total_loss / total_tokens)).item()
+
+    encodings = tokenizer(test_dataset, return_tensors="pt")
+    input_ids = encodings["input_ids"].squeeze(0)
+
+    total_loss = 0.0
+    total_tokens = 0
+
+    # Перебираем датасет скользящим окном
+    for i in range(0, len(input_ids), stride):
+        begin = i
+        end = min(i + max_length, len(input_ids))
+        input_slice = input_ids[begin:end].unsqueeze(0).to(model.device)
+
+        # Вычисляем лосс. HuggingFace автоматически делает shift‑labels для
+        # моделей CausalLM, поэтому достаточно передать labels=input_slice.
+        with torch.no_grad():
+            outputs = model(input_ids=input_slice, labels=input_slice)
+            loss = outputs.loss  # усреднённый по токенам лосс
+
+        seq_len = input_slice.size(1)
+        total_loss += loss.item() * seq_len
+        total_tokens += seq_len
+
+        if end == len(input_ids):
+            break  # достигли конца датасета
+
+    # Средний лосс по всем токенам и перплексия
+    mean_loss = total_loss / total_tokens
+    perplexity = torch.exp(torch.tensor(mean_loss)).item()
+    return perplexity
 
 def evaluate_quantization(
     model_id: str,
@@ -171,7 +213,9 @@ def compare_quantizations(
 
 
 if __name__ == "__main__":
-    model_id = "crumb/nano-mistral"
+    # model_id = "crumb/nano-mistral"
+    # model_id = "Qwen/Qwen2.5-0.5B-Instruct"
+    model_id = "./models/Meta-Llama-3-8B"
     # model_id = "RefalMachine/RuadaptQwen2.5-14B-Instruct-1M"
     prefix_dir = f"models/{model_id.split('/')[1]}"
     path_to_llama_cpp = '/home/calibri/experiments/quantization_benchmark'

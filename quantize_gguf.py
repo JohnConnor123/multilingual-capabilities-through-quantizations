@@ -12,23 +12,44 @@ login(token=os.getenv("HF_TOKEN"))
 
 
 def download_and_prepare_model(model_id: str, path_to_llama_cpp: str, prefix_dir: str = './') -> None:
-    prefix_dir += '/' if prefix_dir[-1] != '/' else ''
-    model_path = prefix_dir + model_id.split("/")[1]
-    path_to_llama_cpp += '/' if path_to_llama_cpp[-1] != '/' else ''
+    """Скачивает модель с HF, либо использует уже существующую локальную папку.
 
-    logger.info("Downloading model")
-    snapshot_download(repo_id=model_id, local_dir=model_path, revision="main")
-                
-    logger.info("Converting to bfloat16 before quantizations")
-    if not os.path.exists(model_path + '-bf16'):
+    Если `model_id` указывает на путь, который уже существует на диске, то
+    пропускаем загрузку из HuggingFace Hub и используем его напрямую.
+    В противном случае считаем, что это remote‑id и загружаем снапшот в
+    директорию `<prefix_dir>/<model_name>`.
+    """
+
+    # Приводим входные пути к единообразному виду
+    if prefix_dir and prefix_dir[-1] != '/':
+        prefix_dir += '/'
+    if path_to_llama_cpp and path_to_llama_cpp[-1] != '/':
+        path_to_llama_cpp += '/'
+
+    # Определяем, является ли model_id локальным путём
+    is_local_model = os.path.isdir(model_id)
+
+    model_name = os.path.basename(model_id.rstrip('/')) if is_local_model else model_id.split('/')[-1]
+    model_path = model_id if is_local_model else prefix_dir + model_name
+
+    if not is_local_model:
+        logger.info(f"Downloading model '{model_id}' to '{model_path}'")
+        snapshot_download(repo_id=model_id, local_dir=model_path, revision="main")
+    else:
+        logger.info(f"Using local model directory '{model_path}'")
+
+    # Конвертация в bf16 (если ещё не конвертировали)
+    bf16_path = model_path + '-bf16.gguf'
+    if not os.path.exists(bf16_path):
+        logger.info("Converting to bfloat16 before quantizations")
         subprocess.run([
             "python",
             path_to_llama_cpp + "llama.cpp/convert_hf_to_gguf.py",
             model_path,
-            "--outfile", model_path + '-bf16.gguf',
+            "--outfile", bf16_path,
             "--outtype", "bf16"
         ], check=True)
-    
+
 
 def quantize_gguf(model_id: str, quant_type: str, prefix_dir: str = './', path_to_llama_cpp: str = './') -> str:
     prefix_dir += '/' if prefix_dir[-1] != '/' else ''
