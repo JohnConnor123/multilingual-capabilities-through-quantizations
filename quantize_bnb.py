@@ -1,8 +1,9 @@
 import os
 import logging
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-from huggingface_hub import login, snapshot_download
+from huggingface_hub import login
 from dotenv import load_dotenv
+from utils import push_to_hub
 
 load_dotenv('.env')
 logger = logging.getLogger(__name__)
@@ -17,6 +18,13 @@ def quantize_bnb(model_id: str, quant_config: dict, prefix_dir: str = './') -> s
 
     if os.path.exists(prefix_dir + quant_path):
         logger.info("Skipping Bitsandbytes quantization because it already exists")
+
+        # Push to Hugging Face Hub with Model Card metadata
+        push_to_hub(
+            quant_dir=prefix_dir + quant_path,
+            base_model=model_id,
+            description=f"Bitsandbytes quantization config: {quant_config}"
+        )
     else:
         quantization_config = BitsAndBytesConfig(**quant_config)
 
@@ -26,22 +34,12 @@ def quantize_bnb(model_id: str, quant_config: dict, prefix_dir: str = './') -> s
             torch_dtype="auto",
         )
 
-        logger.info("Push to hub Bitsandbytes quantized model")
-        model.push_to_hub(
-            quant_path,
-            parent_model=model_id, tags='Bitsandbytes', model_card='quantization'
-        )
-
-        tokenizer = AutoTokenizer.from_pretrained(prefix_dir + model_id.split('/')[1])
-        tokenizer.push_to_hub(
-            quant_path,
-            parent_model=model_id, tags='Bitsandbytes', model_card='quantization'
-        )
-
-
-        logger.info("Save Bitsandbytes quantized model")
+        # Сохраняем модель и токенизатор локально
+        logger.info("Save Bitsandbytes quantized model locally")
         os.makedirs(prefix_dir + quant_path, exist_ok=True)
-        snapshot_download(f"{os.getenv('HF_USERNAME')}/{quant_path}", local_dir=prefix_dir + quant_path, revision="main")
+        model.save_pretrained(prefix_dir + quant_path)
+        tokenizer = AutoTokenizer.from_pretrained(prefix_dir + model_id.split('/')[1])
+        tokenizer.save_pretrained(prefix_dir + quant_path)
 
     return prefix_dir + quant_path
 
@@ -54,7 +52,7 @@ if __name__ == "__main__":
     )
 
     model_id = "Qwen/Qwen2.5-0.5B-Instruct"
-    prefix_dir = f'models/{model_id.split("/")[1]}'
+    prefix_dir = f'models/{model_id.split("/")[-1]}'
     bnb_config = {
         "load_in_4bit": True,  # 4-bit quantization
         "bnb_4bit_quant_type": 'nf4',  # Normalized float 8

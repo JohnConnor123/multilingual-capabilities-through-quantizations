@@ -4,6 +4,7 @@ from awq import AutoAWQForCausalLM
 from transformers import AutoTokenizer
 from huggingface_hub import login
 from dotenv import load_dotenv
+from utils import push_to_hub
 
 load_dotenv('.env')
 logger = logging.getLogger(__name__)
@@ -17,6 +18,12 @@ def quantize_awq(model_id: str, quant_config: dict, prefix_dir: str = './') -> s
 
     if os.path.exists(prefix_dir + quant_path):
         logger.info("Skipping AWQ quantization because it already exists")
+        # Push to Hugging Face Hub with Model Card metadata
+        push_to_hub(
+            quant_dir=prefix_dir + quant_path,
+            base_model=model_id,
+            description=f"AWQ quantization config: {quant_config}"
+        )
     else:
         logger.info("Load model")
         model = AutoAWQForCausalLM.from_pretrained(
@@ -45,7 +52,7 @@ if __name__ == "__main__":
 
     model_id = "Qwen/Qwen2.5-0.5B-Instruct"
     # model_id = "RefalMachine/RuadaptQwen2.5-14B-Instruct-1M"
-    prefix_dir = f'models/{model_id.split("/")[1]}'
+    prefix_dir = f'models/{model_id.split("/")[-1]}'
     awq_config = {"zero_point": True, "q_group_size": 64, "w_bit": 4, "version": "GEMM"}
 
     quantize_awq(model_id=model_id, quant_config=awq_config, prefix_dir=prefix_dir)

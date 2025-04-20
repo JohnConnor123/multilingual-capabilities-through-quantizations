@@ -3,6 +3,7 @@ import logging
 from transformers import AutoModelForCausalLM, AutoTokenizer, GPTQConfig
 from huggingface_hub import login, snapshot_download
 from dotenv import load_dotenv
+from utils import push_to_hub
 
 load_dotenv('.env')
 logger = logging.getLogger(__name__)
@@ -16,6 +17,9 @@ def quantize_gptq(model_id: str, quant_config: dict, prefix_dir: str = './') -> 
 
     if os.path.exists(prefix_dir + quant_path):
         logger.info("Skipping GPTQ quantization because it already exists")
+
+        # Push quantized model to Hugging Face Hub with Model Card metadata
+        push_to_hub(prefix_dir + quant_path, base_model=model_id, description=f"GPTQ quantization config: {quant_config}")
     else:
         tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
         config = GPTQConfig(**quant_config, dataset="c4", tokenizer=tokenizer) # exllama_config={"version":2}
@@ -33,10 +37,6 @@ def quantize_gptq(model_id: str, quant_config: dict, prefix_dir: str = './') -> 
         model.save_pretrained(prefix_dir + quant_path)
         tokenizer.save_pretrained(prefix_dir + quant_path)
 
-        logger.info("Push to hub GPTQ quantized model")
-        model.push_to_hub(quant_path)
-        tokenizer.push_to_hub(quant_path)
-
     return prefix_dir + quant_path
 
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     model_id = "Qwen/Qwen2.5-0.5B-Instruct"
     # model_id = "RefalMachine/RuadaptQwen2.5-14B-Instruct-1M"
-    prefix_dir = f'models/{model_id.split("/")[1]}'
+    prefix_dir = f'models/{model_id.split("/")[-1]}'
     gptq_config = {"bits": 4}
 
     quantize_gptq(model_id=model_id, quant_config=gptq_config, prefix_dir=prefix_dir)

@@ -2,8 +2,9 @@ import os
 import shutil
 import logging
 import subprocess
-from huggingface_hub import login, snapshot_download, HfApi, create_repo
+from huggingface_hub import login, snapshot_download
 from dotenv import load_dotenv
+from utils import push_to_hub
 
 load_dotenv('.env')
 logger = logging.getLogger(__name__)
@@ -37,6 +38,11 @@ def download_and_prepare_model(model_id: str, path_to_llama_cpp: str, prefix_dir
         snapshot_download(repo_id=model_id, local_dir=model_path, revision="main")
     else:
         logger.info(f"Using local model directory '{model_path}'")
+        push_to_hub(
+            quant_dir=model_path,
+            base_model=None,
+            description="Original local model upload"
+        )
 
     # Конвертация в bf16 (если ещё не конвертировали)
     bf16_path = model_path + '-bf16.gguf'
@@ -83,6 +89,8 @@ def quantize_gguf(model_id: str, quant_type: str, prefix_dir: str = './', path_t
             quant_type,
         ], check=True)
 
+    # Push to Hugging Face Hub with Model Card
+    push_to_hub(quant_dir, base_model=model_id, description=f"GGUF quantization type {quant_type}")
     return quant_dir
 
 
@@ -94,7 +102,7 @@ if __name__ == "__main__":
     )
 
     model_id = "Qwen/Qwen2.5-0.5B-Instruct"
-    prefix_dir = f'models/{model_id.split("/")[1]}'
+    prefix_dir = f'models/{model_id.split("/")[-1]}'
     gguf_types = ["Q8_0", "Q6_K", "Q5_K_M", "Q4_0"]
     path_to_llama_cpp = '/home/calibri/experiments/quantization_benchmark'
 

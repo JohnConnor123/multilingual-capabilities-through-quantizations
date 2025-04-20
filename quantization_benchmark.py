@@ -312,7 +312,8 @@ def quantize_gguf_wrapper(model_id: str, quant_config: dict[str, Any], prefix_di
 
 if __name__ == "__main__":
     # model_id = "crumb/nano-mistral"
-    model_id = "models/Qwen2.5-0.5B-Instruct/Qwen2.5-0.5B-Instruct"
+    # model_id = "models/Qwen2.5-0.5B-Instruct/Qwen2.5-0.5B-Instruct"
+    model_id = "Qwen/Qwen2.5-1.5B-Instruct"
     # model_id = "./models/Meta-Llama-3-8B"
     # model_id = "RefalMachine/RuadaptQwen2.5-14B-Instruct-1M"
     # model_id = "Qwen/Qwen2.5-14B-Instruct"
@@ -320,7 +321,7 @@ if __name__ == "__main__":
     path_to_llama_cpp = '/home/calibri/experiments/quantization_benchmark'
 
     configs = {
-        "gguf": {"quant_type": ["Q8_0", "Q6_K", "Q5_K_M", "Q4_0"]},
+        "gguf": {"quant_type": ["Q8_0", "Q6_K"]},
         "gptq": [
             {"bits": 4, "q_group_size": 128},
             {"bits": 8, "q_group_size": 64}
