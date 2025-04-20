@@ -1,4 +1,41 @@
+# Сначала загружаем .env
+from dotenv import load_dotenv
+load_dotenv('.env')
+
+# Основные модули для логирования и фильтрации вывода
 import os
+import sys
+import warnings
+import logging
+from transformers import logging as hf_logging
+
+def disable_warnings():
+    # Отключаем python warnings
+    warnings.filterwarnings("ignore")
+    # Подавляем все логи уровня WARNING и ниже
+    logging.disable(logging.WARNING)
+    # Подавляем логирование HF, Optimum и AutoGPTQ
+    hf_logging.set_verbosity_error()
+    logging.getLogger("transformers").setLevel(logging.ERROR)
+    logging.getLogger("optimum").setLevel(logging.ERROR)
+    logging.getLogger("autogptq").setLevel(logging.ERROR)
+    # Фильтруем STDOUT/STDERR на уровне сообщений
+    orig_write = sys.stdout.write
+    def filtered_write(text):
+        if isinstance(text, str) and any(substr in text for substr in [
+            "Note: Enviro", "Unused kwargs", "WARNING - AutoGPTQ"
+        ]):
+            return len(text)
+        return orig_write(text)
+    sys.stdout.write = filtered_write
+    sys.stderr.write = filtered_write
+
+# Читаем флаг из окружения и при необходимости вызываем функцию
+FILTER_WARNINGS = os.getenv("FILTER_WARNINGS", "False").lower() in ("1", "true", "yes")
+if FILTER_WARNINGS:
+    disable_warnings()
+
+# Далее обычные импорты
 import time
 from typing import Any
 import pandas as pd
@@ -8,10 +45,6 @@ from quantize_gguf import quantize_gguf, download_and_prepare_model
 from quantize_gptq import quantize_gptq
 from quantize_awq import quantize_awq
 from quantize_bnb import quantize_bnb
-from dotenv import load_dotenv
-
-load_dotenv('.env')
-
 
 def get_prefix() -> str:
     return f"{time.strftime('%Y-%m-%d %H:%M:%S')} - INFO: "
