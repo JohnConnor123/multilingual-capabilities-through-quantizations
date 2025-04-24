@@ -313,8 +313,8 @@ def quantize_gguf_wrapper(model_id: str, quant_config: dict[str, Any], prefix_di
 if __name__ == "__main__":
     # model_id = "crumb/nano-mistral"
     # model_id = "models/Qwen2.5-0.5B-Instruct/Qwen2.5-0.5B-Instruct"
-    model_id = "Qwen/Qwen2.5-1.5B-Instruct"
-    # model_id = "./models/Meta-Llama-3-8B"
+    # model_id = "Qwen/Qwen2.5-1.5B-Instruct"
+    model_id = "./models/Meta-Llama-3-8B/Meta-Llama-3-8B"
     # model_id = "RefalMachine/RuadaptQwen2.5-14B-Instruct-1M"
     # model_id = "Qwen/Qwen2.5-14B-Instruct"
     prefix_dir = f"models/{model_id.split('/')[-1]}"

@@ -38,11 +38,15 @@ def download_and_prepare_model(model_id: str, path_to_llama_cpp: str, prefix_dir
         snapshot_download(repo_id=model_id, local_dir=model_path, revision="main")
     else:
         logger.info(f"Using local model directory '{model_path}'")
-        push_to_hub(
-            quant_dir=model_path,
-            base_model=None,
-            description="Original local model upload"
-        )
+        if os.getenv("UPLOAD_ORIGINAL_MODEL").lower() == 'true':
+            logger.info("UPLOAD_ORIGINAL_MODEL is True, uploading original local model to HF hub.")
+            push_to_hub(
+                quant_dir=model_path,
+                base_model=None,
+                description="Original local model upload"
+            )
+        else:
+            logger.info("Skipping upload of original local model as UPLOAD_ORIGINAL_MODEL is not set to True.")
 
     # Конвертация в bf16 (если ещё не конвертировали)
     bf16_path = model_path + '-bf16.gguf'
