@@ -64,6 +64,8 @@ def push_to_hub(quant_dir: str, base_model: str = None, description: str = ""):
 
     # Пушим Model Card, если указана базовая модель
     if base_model:
+        # Заметка о фреймворке в начале карточки
+        note = "> ## **This quantization was done using the [quantization-benchmark](https://github.com/JohnConnor123/quantization-benchmark) framework**\n\n"
         card_data = ModelCardData(
             language="en",
             base_model=base_model
@@ -71,5 +73,7 @@ def push_to_hub(quant_dir: str, base_model: str = None, description: str = ""):
         card = ModelCard.from_template(
             card_data, model_id=repo_name, model_description=description
         )
+        card.text = note + card.text
+
         card.push_to_hub(repo_id)
         logger.info(f"Pushed Model Card to HF Hub: {repo_id}")
