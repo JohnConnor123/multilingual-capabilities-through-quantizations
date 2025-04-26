@@ -12,19 +12,12 @@ login(token=os.getenv("HF_TOKEN"))
 
 def quantize_bnb(model_id: str, quant_config: dict, prefix_dir: str = './') -> str:
     prefix_dir += '/' if prefix_dir[-1] != '/' else ''
-    model_path = prefix_dir + model_id.split('/')[1] if os.path.exists(prefix_dir + model_id.split('/')[1]) else model_id
-    quant_path = model_id.split('/')[1] + \
+    model_path = prefix_dir + model_id.split('/')[-1] if os.path.exists(prefix_dir + model_id.split('/')[-1]) else model_id
+    quant_path = model_id.split('/')[-1] + \
         f"-BNB-{8 if ('load_in_8bit' in quant_config and quant_config['load_in_8bit'] == True) else 4}bit"
 
     if os.path.exists(prefix_dir + quant_path):
         logger.info("Skipping Bitsandbytes quantization because it already exists")
-
-        # Push to Hugging Face Hub with Model Card metadata
-        push_to_hub(
-            quant_dir=prefix_dir + quant_path,
-            base_model=model_id,
-            description=f"Bitsandbytes quantization config: {quant_config}"
-        )
     else:
         quantization_config = BitsAndBytesConfig(**quant_config)
 
@@ -38,9 +31,15 @@ def quantize_bnb(model_id: str, quant_config: dict, prefix_dir: str = './') -> s
         logger.info("Save Bitsandbytes quantized model locally")
         os.makedirs(prefix_dir + quant_path, exist_ok=True)
         model.save_pretrained(prefix_dir + quant_path)
-        tokenizer = AutoTokenizer.from_pretrained(prefix_dir + model_id.split('/')[1])
+        tokenizer = AutoTokenizer.from_pretrained(prefix_dir + model_id.split('/')[-1])
         tokenizer.save_pretrained(prefix_dir + quant_path)
 
+    # Push to Hugging Face Hub with Model Card metadata
+    push_to_hub(
+        quant_dir=prefix_dir + quant_path,
+        base_model=model_id,
+        description=f"Bitsandbytes quantization config: {quant_config}"
+    )
     return prefix_dir + quant_path
 
 

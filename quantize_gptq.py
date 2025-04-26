@@ -12,14 +12,11 @@ login(token=os.getenv("HF_TOKEN"))
 
 def quantize_gptq(model_id: str, quant_config: dict, prefix_dir: str = './') -> str:
     prefix_dir += '/' if prefix_dir[-1] != '/' else ''
-    model_path = prefix_dir + model_id.split('/')[1] if os.path.exists(prefix_dir + model_id.split('/')[1]) else model_id
-    quant_path = model_id.split('/')[1] + f"-GPTQ-{quant_config['bits']}bit"
+    model_path = prefix_dir + model_id.split('/')[-1] if os.path.exists(prefix_dir + model_id.split('/')[-1]) else model_id
+    quant_path = model_id.split('/')[-1] + f"-GPTQ-{quant_config['bits']}bit"
 
     if os.path.exists(prefix_dir + quant_path):
         logger.info("Skipping GPTQ quantization because it already exists")
-
-        # Push quantized model to Hugging Face Hub with Model Card metadata
-        push_to_hub(prefix_dir + quant_path, base_model=model_id, description=f"GPTQ quantization config: {quant_config}")
     else:
         tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
         config = GPTQConfig(**quant_config, dataset="c4", tokenizer=tokenizer) # exllama_config={"version":2}
@@ -37,6 +34,8 @@ def quantize_gptq(model_id: str, quant_config: dict, prefix_dir: str = './') -> 
         model.save_pretrained(prefix_dir + quant_path)
         tokenizer.save_pretrained(prefix_dir + quant_path)
 
+    # Push quantized model to Hugging Face Hub with Model Card metadata
+    push_to_hub(prefix_dir + quant_path, base_model=model_id, description=f"GPTQ quantization config: {quant_config}")
     return prefix_dir + quant_path
 
 

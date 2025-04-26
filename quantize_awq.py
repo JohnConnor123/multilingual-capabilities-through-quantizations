@@ -13,17 +13,11 @@ login(token=os.getenv("HF_TOKEN"))
 
 def quantize_awq(model_id: str, quant_config: dict, prefix_dir: str = './') -> str:
     prefix_dir += '/' if prefix_dir[-1] != '/' else ''
-    model_path = prefix_dir + model_id.split('/')[1] if os.path.exists(prefix_dir + model_id.split('/')[1]) else model_id
-    quant_path = model_id.split('/')[1] + f'-AWQ-{quant_config["q_group_size"]}G-INT{quant_config["w_bit"]}-v{quant_config["version"]}'
+    model_path = prefix_dir + model_id.split('/')[-1] if os.path.exists(prefix_dir + model_id.split('/')[-1]) else model_id
+    quant_path = model_id.split('/')[-1] + f'-AWQ-{quant_config["q_group_size"]}G-INT{quant_config["w_bit"]}-v{quant_config["version"]}'
 
     if os.path.exists(prefix_dir + quant_path):
         logger.info("Skipping AWQ quantization because it already exists")
-        # Push to Hugging Face Hub with Model Card metadata
-        push_to_hub(
-            quant_dir=prefix_dir + quant_path,
-            base_model=model_id,
-            description=f"AWQ quantization config: {quant_config}"
-        )
     else:
         logger.info("Load model")
         model = AutoAWQForCausalLM.from_pretrained(
@@ -39,6 +33,12 @@ def quantize_awq(model_id: str, quant_config: dict, prefix_dir: str = './') -> s
         model.save_quantized(prefix_dir + quant_path)
         tokenizer.save_pretrained(prefix_dir + quant_path)
 
+    # Push to Hugging Face Hub with Model Card metadata
+    push_to_hub(
+        quant_dir=prefix_dir + quant_path,
+        base_model=model_id,
+        description=f"AWQ quantization config: {quant_config}"
+    )
     return prefix_dir + quant_path
 
 

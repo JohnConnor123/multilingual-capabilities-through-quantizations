@@ -65,10 +65,10 @@ def quantize_gguf(model_id: str, quant_type: str, prefix_dir: str = './', path_t
     prefix_dir += '/' if prefix_dir[-1] != '/' else ''
     path_to_llama_cpp += '/' if path_to_llama_cpp[-1] != '/' else ''
 
-    model_path = prefix_dir + model_id.split('/')[1] if os.path.exists(prefix_dir + model_id.split('/')[1]) else model_id
+    model_path = prefix_dir + model_id.split('/')[-1] if os.path.exists(prefix_dir + model_id.split('/')[-1]) else model_id
     
-    quant_dir = prefix_dir + model_id.split('/')[1] + '-' + quant_type
-    quant_name = f"{model_id.split('/')[1]}-{quant_type}.gguf"
+    quant_dir = prefix_dir + model_id.split('/')[-1] + '-' + quant_type
+    quant_name = f"{model_id.split('/')[-1]}-{quant_type}.gguf"
     quant_path = quant_dir + '/' + quant_name
 
     if os.path.exists(quant_dir):
@@ -78,7 +78,7 @@ def quantize_gguf(model_id: str, quant_type: str, prefix_dir: str = './', path_t
         os.makedirs(quant_dir, exist_ok=True)
 
         # Копируем исходные файлы модели (кроме .safetensors и .bin)
-        source_dir = prefix_dir + model_id.split('/')[1]
+        source_dir = prefix_dir + model_id.split('/')[-1]
         for file_name in os.listdir(source_dir):
             if not file_name.endswith(('.safetensors', '.bin')) and not os.path.isdir(os.path.join(source_dir, file_name)):
                 src_path = os.path.join(source_dir, file_name)

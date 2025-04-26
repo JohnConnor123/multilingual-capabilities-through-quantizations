@@ -5,3 +5,4 @@ MERA
 AutoGPTQ
 models
 .env
+test.py

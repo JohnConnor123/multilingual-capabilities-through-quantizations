@@ -62,6 +62,8 @@ def measure_inference_time(model, tokenizer, test_input: str, num_runs: int = 5)
     """Замеряет метрики времени инференса"""
     # Подготовка входа и настройка pad_token_id для корректной генерации
     inputs = tokenizer(test_input, return_tensors="pt").to(model.device)
+    # Удаляем token_type_ids, чтобы избежать передачи неиспользуемых аргументов в generate
+    inputs.pop("token_type_ids", None)
     # Устанавливаем pad_token_id, если он не задан (избегаем ошибок генерации)
     if model.config.pad_token_id is None and hasattr(tokenizer, 'eos_token_id'):
         model.config.pad_token_id = tokenizer.eos_token_id
@@ -312,9 +314,9 @@ def quantize_gguf_wrapper(model_id: str, quant_config: dict[str, Any], prefix_di
 
 if __name__ == "__main__":
     # model_id = "crumb/nano-mistral"
-    # model_id = "models/Qwen2.5-0.5B-Instruct/Qwen2.5-0.5B-Instruct"
-    # model_id = "Qwen/Qwen2.5-1.5B-Instruct"
-    model_id = "./models/Meta-Llama-3-8B/Meta-Llama-3-8B"
+    # model_id = "./models/Qwen2.5-0.5B-Instruct/Qwen2.5-0.5B-Instruct"
+    model_id = "Qwen/Qwen2.5-1.5B-Instruct"
+    # model_id = "./models/Meta-Llama-3-8B/Meta-Llama-3-8B"
     # model_id = "RefalMachine/RuadaptQwen2.5-14B-Instruct-1M"
     # model_id = "Qwen/Qwen2.5-14B-Instruct"
     prefix_dir = f"models/{model_id.split('/')[-1]}"
