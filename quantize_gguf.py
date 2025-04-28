@@ -94,7 +94,7 @@ def quantize_gguf(model_id: str, quant_type: str, prefix_dir: str = './', path_t
         ], check=True)
 
     # Push to Hugging Face Hub with Model Card
-    push_to_hub(quant_dir, base_model=model_id, description=f"GGUF quantization type {quant_type}")
+    push_to_hub(quant_dir, base_model=model_id)
     return quant_dir
 
 

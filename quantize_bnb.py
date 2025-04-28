@@ -38,7 +38,7 @@ def quantize_bnb(model_id: str, quant_config: dict, prefix_dir: str = './') -> s
     push_to_hub(
         quant_dir=prefix_dir + quant_path,
         base_model=model_id,
-        description=f"Bitsandbytes quantization config: {quant_config}"
+        description=f"## Bitsandbytes quantization config\n\n>{quant_config}"
     )
     return prefix_dir + quant_path
 

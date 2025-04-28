@@ -35,7 +35,7 @@ def quantize_gptq(model_id: str, quant_config: dict, prefix_dir: str = './') -> 
         tokenizer.save_pretrained(prefix_dir + quant_path)
 
     # Push quantized model to Hugging Face Hub with Model Card metadata
-    push_to_hub(prefix_dir + quant_path, base_model=model_id, description=f"GPTQ quantization config: {quant_config}")
+    push_to_hub(prefix_dir + quant_path, base_model=model_id, description=f"## GPTQ quantization config\n\n>{quant_config}")
     return prefix_dir + quant_path
 
 
