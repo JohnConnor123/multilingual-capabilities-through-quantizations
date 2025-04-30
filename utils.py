@@ -70,10 +70,9 @@ def push_to_hub(quant_dir: str, base_model: str = None, description: str = ""):
             language="en",
             base_model=base_model
         )
-        card = ModelCard.from_template(
-            card_data, model_id=repo_name, model_description=description
-        )
-        card.text = note + card.text
+        card = ModelCard.load(base_model)
+        card.data = card_data
+        card.text = note + card.text + f'\n\n{description}'
 
         card.push_to_hub(repo_id)
         logger.info(f"Pushed Model Card to HF Hub: {repo_id}")

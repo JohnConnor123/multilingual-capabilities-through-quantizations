@@ -24,7 +24,7 @@ def quantize_gptq(model_id: str, quant_config: dict, prefix_dir: str = './') -> 
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
             device_map="auto",
-            trust_remote_code=False,
+            trust_remote_code=True,
             quantization_config=config,
             revision="main"
         )
